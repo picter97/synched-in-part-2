@@ -1,5 +1,7 @@
 # SynchedIn
 
+>This README describes part 2 of the activity. For part 1, see [github.com/jeremyrrose/synched-in](https://github.com/jeremyrrose/synched-in).
+
 _OMG what if there were an app that let you connect with other professionals in your field?_
 
 _Like, a social network, but with less disinformation and fewer selfies and more of, like, people just kinda boasting about their professional achievements!_
@@ -16,6 +18,8 @@ The packages `react-bootstrap` and `react-router-dom` have also been pre-install
 
 There are some interesting things in the `utils` and `assets` directories, which we'll address as we need to.
 
+The app currently fetches the data and displays a card for each user. Let's filter them!
+
 ## Setup
 
 - Fork and clone this repository.
@@ -31,7 +35,7 @@ Let's think about what we're doing.
 This app will show a list of fake people who work at fake companies. Let's pretend it's real!
 
 ### Our goals
-- Show the list of people in a sensible way.
+- Show the list of people in a sensible way. **DONE**
 - Enable the app to show selected people based on their status in a few categories that are most important for business decsisions:
     - `devLevel`
     - `company`
@@ -41,115 +45,119 @@ This app will show a list of fake people who work at fake companies. Let's prete
 
 ### Think ahead
 
-We'll need:
-1. The data for a list of people. We should probably keep it in state at the top level (`App.js`, perhaps) of our application.
-2. A component that displays an individual person.
-3. A way to filter people by criteria.
-4. A way to control "favorites" and "blocking" -- probably some state variables at our top level.
+We need some way to filter users by dev level. We'll need to set up a way for the user to select a level, then display results based on that. We can probably use `.filter()`...
 
-We can probably do it! Let's take it step by step.
+## Step 2: Play with filter
 
-## Step 2: Get the data
-
-A typical React front end in a full-stack app uses `fetch` (or something similar) to grab data of this sort from an API on the back end.
-
-We know that `fetch` returns a promise and is a bit difficult to work with, and we also know that trying to yoink data from random APIs can create CORS errors that confuse us.
-
->### HACK: Simulated `fetch`
->
->Pre-built into this package is a function that provides the data you need -- but it provides it as a `fetch`-like promise so that you can practice handling asynchoronous data. Neat!
->
->It's also _frustrating_, though! Like `fetch`, the `fakeFetch` function doesn't return the data directly but rather returns a promise. You can use asynchronous programming and the `.json()` method of the return value to get hold of your data.
-
-Let's use the fake `fetch` and `useEffect`, grab some people data, and store it as `people` in state!
-
-Steps to do (in `App.js`):
-- `import { useState, useEffect } from 'react'`
-- `import fakeFetch from './utils/fakeFetch'`
-- Create `people` and `setPeople` using `useState`, with an initial value of `[ ]`.
-- Set up a `useEffect` to grab the data using `fakeFetch` and `<FAKE_FETCH_RESULT>.json()`. Don't forget to set your dependency array! When and how often do you think this data should be fetched?
-- Inside your `useEffect`, store the data in `people` using `setPeople`.
-- Reach out to your instructor if you hit _any_ bugs or have any trouble!
-- Test whether your data is set in state. How can you find out?
-
-## Step 3: Display each `Person`
-
-Each person should have their own individual display element, right? Let's create a `Person.jsx` in `/components`.
-
-For right now, just make `Person.jsx` return a `div` that with text content `I'm a person`!
-
-Now import `Person` into `App.js`. Inside the `return` part of `App.js`, use `.map` to render a `Person` for each person in `people`!
-
-For right now, in your browser, you'll see 300 assertions of individual personhood. We're not here to judge, so we'll accept it!
-
-## Step 4: Pass the data for each person
-
-If you look at the data in `assets/data.json`, you'll see that the information for each person looks roughly like this:
-
-```json
-    {
-        "id": 292,
-        "fullName": "Gwendolyn Casper",
-        "email": "Ibrahim_Barrows@hotmail.com",
-        "devLevel": "senior",
-        "company": "HellaWorld, Inc.",
-        "title": "Principal Optimization Administrator",
-        "image": "https://loremflickr.com/200/200/animals",
-        "favoriteColor": "plum",
-        "favoriteMusicGenre": "Funk",
-        "favoriteAnimal": "snake",
-        "bio": "Vero rem aperiam quia laborum exercitationem id dolor. Repellat officia quis aperiam earum."
-    }
-```
-
-That's a lot of information that we could access by using the keys in each person's object.
-
-Unfortunately, our `Person` component doesn't have that information at the moment. How can we pass that information to the `Person` component?
-
-If we're currently `map`ping a `Person` for each `person` in `people`, then we already have most of what we need in place. Now we just need to pass some props!
-
-It looks ridiculous, but you might use something like this in `App.js`:
+In `App.js` we currently map through the entire array of people. Can we filter it? Look for this line:
 
 ```js
-<div className="people-div">
-    { people.map(person => <Person key={person.id} person={person} />) }
-</div>
+          { people.map(person => <Person key={person.id} person={person} />) }
 ```
 
->Ask your instructor to help break these lines down with you if you're confused.
+What if we chained a `.filter()` right in there?
 
-Inside `Person.jsx`, we'll now be able to access each person's information as `props.person`. Go ahead and try a `console.log(props.person)` in `Person.jsx`!
+```js
+          { people
+              .filter(person => person.devLevel === "student")
+              .map(person => <Person key={person.id} person={person} />) }
+```
 
-## Step 5: Customize your person element
+Try this and see what you see in the browser.
 
-Now that we have access to the data, we can show each person's `fullName`, `company`, and `devLevel` individually.
+Cool! It's just students! Now change it back, because we need to set up a dynamic filter. We'll come back to this.
 
-In `Person.jsx`, try to grab some keys from `props.person` and display them on the page instead of `I'm a person!`
+## Step 3: Create a form
 
-Now make them pretty! Remember that this repository has Bootstrap pre-installed, so you can either set up some custom CSS for your `Person` component or use the `react-boostrap` `Card` component: [Documentattion](https://react-bootstrap.github.io/components/cards/)
+Ok, we're going to need a way to store the user's preference for the dev level filter. State is perfect for that! In `App.js`:
 
->If you use `Card`, you'll want to also use its child elements, like `Card.Title` and `Card.Subtitle`.
+```js
+  const [ devLevelFilter, setDevLevelFilter ] = useState("")
+```
 
-## Step 6: Make it flex
+OK, great. The thing is, we don't want to clutter up our `App.js` with the form logic. Create another component called `Filter.jsx` and set up a form! You can use Bootstrap's `Form` component. It might look like this:
 
-Right now, you probably see a long column of individual people.
+```js
+import Form from 'react-bootstrap/Form'
 
-On the `div` in which your `people` appear, use either CSS or flexbox to make your person cards fill the screen side to side and wrap to a new line once the line is full!
+export default function Filter (props) {
 
-> Remember that Bootstrap is preinstalled here. In addition to `react-bootstrap` components, you can also use regular Bootstrap CSS classes.
->
->- [Bootstrap Flex](https://getbootstrap.com/docs/4.0/utilities/flex/)
+    return (
+        <Form>
+            <Form.Label htmlFor="devLevel-select">Filter by developer level: </Form.Label>
+            <Form.Select id="devLevel-select">
+            <option value="">No filter</option>
+            </Form.Select>
+        </Form>
+    )
+}
+```
 
-You're ready for the next step!
+Import this component into `App.js` and show it below the header.
 
-## BONUS: Style your cards
+## Step 4: Populate the form
 
-If you've made it this far, you're ready for step 2. If you have some time to kill, flesh out your `Person` cards!
+First of all, what are the possible dev levels? This repository actually includes some constants, so we can just pull them in from `utils/constants.js`. In `Filter.jsx`:
 
-- Use each person's `favoriteColor` to style their name.
-- Disply the company name and dev level as subtitiles, each in a different way.
-- Show each person's bio as a "pull quote" in italics.
+```js
+import { DEV_LEVELS as devLevels } from '../utils/constants'
+```
 
-## BONUS: Style a header
+You can console.log `devLevels` if you want. :shrug It's an array of strings!
 
-Right now we just have a bunch of cards. Create a `Header` component with some cool branding moves for our awesome app. We might use it again for navigation later!
+We can actually map through this array to generate our form options! Each `<option>` should use the current `devLevel` for its `key` and `value` attributes, and also for its inner text. See if you can set it up!
+
+## Step 5: Change state
+
+That's a handsome form, but currently when we select a level, nothing happens. We'll need to hook it up to state in `App.js` by passing in our setter through props:
+
+```js
+    <Filter setDevLevelFilter={setDevLevelFilter}/>
+```
+
+Now we can use `props.setDevLevelFilter` in the `Filter` component! Set up an `onChange` callback for the form to set the desired dev level in state. Test with React dev tools to see if the value is changing!
+
+## Step 6: Filter
+
+>There are lots of ways to solve this, and depending on the situation in your future apps, you might use a variety of solutions. We'll look at one here.
+
+### Pseudocode!
+
+What do we need to do?
+
+- If a filter is set, we should just show people whose dev level matches the selected level.
+- If _no_ filter is set, just show the list of people
+
+### Filter by dev level
+
+We had some code earlier that worked to filter. We could set it up to work dynamically using our value in state just by plugging it in!
+
+```js
+          { people
+              .filter(person => person.devLevel === devLevelFilter)
+              .map(person => <Person key={person.id} person={person} />) }
+```
+
+Try it out. Pretty neat! There's a problem, though: If we select "No filter," we don't see _anybody_. :/
+
+### Get logical
+
+Take a look at just our callback function inside `.filter()`:
+
+```js
+    person => person.devLevel === devLevelFilter
+```
+
+Right now this function returns `true` if the person's dev level matches the filter. We need to add the logic to make it _also_ return `true` for everyone if the `devLevelFilter` is `""`. See if you can do it!
+
+Hints:
+- Remember that a callback function is... a function. It doesn't _have_ to be on one line.
+- Also remember that, if you _want_ it to be on one line, you can use a ternary statement (`?`) or the _OR_ operator (`||`) to do some slick logic.
+
+>Make sure to check with your instructor if you get stuck!
+
+## BONUS: Set up another filter
+
+`utils/constants.js` _also_ includes the enumerated values for `company` and `favoriteMusicGenre`. Import those values and add another drop-down.
+
+How should you adjust your logic in `App.js` to filter by _both_?
