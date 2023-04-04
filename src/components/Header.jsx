@@ -1,3 +1,5 @@
+import React from "react"
+
 export default function Header (props) {
     return (
         <div className="container-fluid d-flex justify-content-start p-2 m-2 bg-primary" style={{color: "white"}}>
